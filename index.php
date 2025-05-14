@@ -46,9 +46,9 @@ foreach (new DirectoryIterator('.') as $file) {
             font-family: system-ui, -apple-system, sans-serif;
         }
         .gallery {
-            columns: 2 150px;
-            column-gap: 20px;
-            padding: 20px;
+            columns: 2 140px;
+            column-gap: 16px;
+            padding: 16px;
         }
         @media (min-width: 600px) {
             .gallery {
@@ -57,12 +57,12 @@ foreach (new DirectoryIterator('.') as $file) {
         }
         @media (min-width: 900px) {
             .gallery {
-                columns: 4 150px;
+                columns: 4 160px;
             }
         }
         @media (min-width: 1200px) {
             .gallery {
-                columns: 6 150px;
+                columns: 6 180px;
             }
         }
         .gallery-item {
