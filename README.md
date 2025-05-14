@@ -59,10 +59,15 @@ That's it! The gallery will automatically display all supported media.
 
 ## License
 
-<a href="https://gitlab.com/ma-tt/snazzy-gallery">snazzy-gallery</a> © 2025 by <a href="https://gitlab.com/ma-tt">ma-tt</a> is licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a><img src="https://mirrors.creativecommons.org/presskit/icons/cc.svg" style="max-width: 1em;max-height:1em;margin-left: .2em;"><img src="https://mirrors.creativecommons.org/presskit/icons/by.svg" style="max-width: 1em;max-height:1em;margin-left: .2em;"><img src="https://mirrors.creativecommons.org/presskit/icons/nc.svg" style="max-width: 1em;max-height:1em;margin-left: .2em;"><img src="https://mirrors.creativecommons.org/presskit/icons/sa.svg" style="max-width: 1em;max-height:1em;margin-left: .2em;">
+[snazzy-gallery](https://gitlab.com/ma-tt/snazzy-gallery) © 2025 by [ma-tt](https://gitlab.com/ma-tt) is licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/).
+
+![CC](https://mirrors.creativecommons.org/presskit/icons/cc.svg)
+![BY](https://mirrors.creativecommons.org/presskit/icons/by.svg)
+![NC](https://mirrors.creativecommons.org/presskit/icons/nc.svg)
+![SA](https://mirrors.creativecommons.org/presskit/icons/sa.svg)
 
 ---
 
 ## Credits
 
-Created by [ma-tt](https://gitlab.com/ma-tt).  
+Created by [ma-tt](https://gitlab.com/ma-tt).
