@@ -73,7 +73,7 @@ foreach (new DirectoryIterator('.') as $file) {
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             transition: transform 0.3s ease;
             cursor: pointer;
-            margin-bottom: 20px;
+            margin-bottom: 12px;
             break-inside: avoid;
         }
         .gallery-item:hover {
