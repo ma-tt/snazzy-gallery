@@ -19,7 +19,7 @@ foreach (new DirectoryIterator('.') as $file) {
                 'type' => 'video',
                 'src' => $file->getFilename()
             ];
-        } else {
+        } elseif ($extension !== 'php') {
             $skipped[] = [
                 'name' => $file->getFilename(),
                 'ext' => $extension
