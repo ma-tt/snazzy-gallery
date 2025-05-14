@@ -202,12 +202,60 @@ foreach (new DirectoryIterator('.') as $file) {
     <?php endif; ?>
 
     <script>
+        // Collect image sources for navigation
+        const images = [
+            <?php foreach($media as $item): if($item['type']==='image'): ?>
+                "<?= htmlspecialchars($item['src']) ?>",
+            <?php endif; endforeach; ?>
+        ];
+        let currentIndex = -1;
+
         function showLightbox(imageSrc) {
             const lightbox = document.querySelector('.lightbox');
             const lightboxImg = lightbox.querySelector('img');
+            currentIndex = images.indexOf(imageSrc);
             lightboxImg.src = imageSrc;
             lightbox.style.display = 'block';
         }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            const lightbox = document.querySelector('.lightbox');
+            if (lightbox.style.display === 'block' && images.length > 1) {
+                if (e.key === 'ArrowRight') {
+                    currentIndex = (currentIndex + 1) % images.length;
+                    lightbox.querySelector('img').src = images[currentIndex];
+                } else if (e.key === 'ArrowLeft') {
+                    currentIndex = (currentIndex - 1 + images.length) % images.length;
+                    lightbox.querySelector('img').src = images[currentIndex];
+                } else if (e.key === 'Escape') {
+                    lightbox.style.display = 'none';
+                }
+            }
+        });
+
+        // Touch swipe navigation
+        let touchStartX = null;
+        document.querySelector('.lightbox').addEventListener('touchstart', function(e) {
+            if (e.touches.length === 1) {
+                touchStartX = e.touches[0].clientX;
+            }
+        });
+        document.querySelector('.lightbox').addEventListener('touchend', function(e) {
+            if (touchStartX !== null && e.changedTouches.length === 1) {
+                let touchEndX = e.changedTouches[0].clientX;
+                let dx = touchEndX - touchStartX;
+                if (Math.abs(dx) > 50 && images.length > 1) {
+                    if (dx < 0) { // swipe left
+                        currentIndex = (currentIndex + 1) % images.length;
+                    } else { // swipe right
+                        currentIndex = (currentIndex - 1 + images.length) % images.length;
+                    }
+                    this.querySelector('img').src = images[currentIndex];
+                }
+                touchStartX = null;
+            }
+        });
     </script>
 </body>
 </html>
