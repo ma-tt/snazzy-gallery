@@ -27,27 +27,27 @@ foreach (new DirectoryIterator('.') as $file) {
         .gallery {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            grid-auto-flow: dense;
             grid-gap: 20px;
             padding: 20px;
         }
         .gallery-item {
             position: relative;
-            padding-bottom: 100%;
             background: #fff;
             border-radius: 8px;
             overflow: hidden;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             transition: transform 0.3s ease;
             cursor: pointer;
+            min-height: 200px;
         }
         .gallery-item:hover {
             transform: scale(1.02);
         }
         .gallery-item img {
-            position: absolute;
             width: 100%;
-            height: 100%;
-            object-fit: cover;
+            height: auto;
+            display: block;
         }
         .lightbox {
             display: none;
