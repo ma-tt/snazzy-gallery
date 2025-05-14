@@ -6,7 +6,16 @@ foreach (new DirectoryIterator('.') as $file) {
     if ($file->isFile()) {
         $extension = strtolower($file->getExtension());
         if (in_array($extension, $allowed_types)) {
-            $images[] = $file->getFilename();
+            $filename = $file->getFilename();
+            $dimensions = getimagesize($filename);
+            if ($dimensions) {
+                $images[] = [
+                    'name' => $filename,
+                    'width' => $dimensions[0],
+                    'height' => $dimensions[1],
+                    'ratio' => $dimensions[0] / $dimensions[1]
+                ];
+            }
         }
     }
 }
@@ -26,9 +35,10 @@ foreach (new DirectoryIterator('.') as $file) {
         }
         .gallery {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            grid-auto-rows: 200px;
             grid-auto-flow: dense;
-            grid-gap: 20px;
+            gap: 20px;
             padding: 20px;
         }
         .gallery-item {
@@ -39,15 +49,25 @@ foreach (new DirectoryIterator('.') as $file) {
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             transition: transform 0.3s ease;
             cursor: pointer;
-            min-height: 200px;
+            grid-row: auto / span 1;
+        }
+        .gallery-item.wide {
+            grid-column: auto / span 2;
+        }
+        .gallery-item.tall {
+            grid-row: auto / span 2;
+        }
+        .gallery-item.large {
+            grid-column: auto / span 2;
+            grid-row: auto / span 2;
         }
         .gallery-item:hover {
             transform: scale(1.02);
         }
         .gallery-item img {
             width: 100%;
-            height: auto;
-            display: block;
+            height: 100%;
+            object-fit: cover;
         }
         .lightbox {
             display: none;
@@ -74,9 +94,14 @@ foreach (new DirectoryIterator('.') as $file) {
 </head>
 <body>
     <div class="gallery">
-        <?php foreach($images as $image): ?>
-        <div class="gallery-item" onclick="showLightbox('<?= htmlspecialchars($image) ?>')">
-            <img loading="lazy" src="<?= htmlspecialchars($image) ?>" alt="">
+        <?php foreach($images as $image): 
+            $class = '';
+            if ($image['ratio'] >= 1.7) $class = 'wide';
+            elseif ($image['ratio'] <= 0.7) $class = 'tall';
+            elseif ($image['ratio'] >= 1.2 && $image['width'] > 1200) $class = 'large';
+        ?>
+        <div class="gallery-item <?= $class ?>" onclick="showLightbox('<?= htmlspecialchars($image['name']) ?>')">
+            <img loading="lazy" src="<?= htmlspecialchars($image['name']) ?>" alt="">
         </div>
         <?php endforeach; ?>
     </div>
