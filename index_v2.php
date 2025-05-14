@@ -4,7 +4,6 @@ $allowed_types = [
     'video' => ['mp4', 'webm', 'ogg']
 ];
 $media = [];
-$skipped = [];
 
 foreach (new DirectoryIterator('.') as $file) {
     if ($file->isFile()) {
@@ -18,11 +17,6 @@ foreach (new DirectoryIterator('.') as $file) {
             $media[] = [
                 'type' => 'video',
                 'src' => $file->getFilename()
-            ];
-        } else {
-            $skipped[] = [
-                'name' => $file->getFilename(),
-                'ext' => $extension
             ];
         }
     }
@@ -112,59 +106,6 @@ foreach (new DirectoryIterator('.') as $file) {
             transform: translate(-50%, -50%);
             object-fit: contain;
         }
-        .skipped-btn {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            background: #222;
-            color: #fff;
-            border: none;
-            border-radius: 20px;
-            padding: 10px 18px;
-            font-size: 14px;
-            opacity: 0.7;
-            cursor: pointer;
-            z-index: 1100;
-            transition: opacity 0.2s;
-        }
-        .skipped-btn:hover {
-            opacity: 1;
-        }
-        .skipped-modal {
-            display: none;
-            position: fixed;
-            bottom: 70px;
-            right: 24px;
-            background: #fff;
-            color: #222;
-            border-radius: 8px;
-            box-shadow: 0 2px 16px rgba(0,0,0,0.18);
-            padding: 18px 22px 18px 18px;
-            min-width: 260px;
-            max-width: 90vw;
-            max-height: 60vh;
-            overflow-y: auto;
-            z-index: 1200;
-        }
-        .skipped-modal h4 {
-            margin: 0 0 10px 0;
-            font-size: 16px;
-        }
-        .skipped-modal ul {
-            margin: 0;
-            padding-left: 18px;
-            font-size: 13px;
-        }
-        .skipped-modal .close {
-            position: absolute;
-            top: 8px;
-            right: 12px;
-            background: none;
-            border: none;
-            font-size: 18px;
-            color: #888;
-            cursor: pointer;
-        }
     </style>
 </head>
 <body>
@@ -185,21 +126,6 @@ foreach (new DirectoryIterator('.') as $file) {
     <div class="lightbox" onclick="this.style.display='none'">
         <img src="" alt="">
     </div>
-
-    <?php if (count($skipped) > 0): ?>
-        <button class="skipped-btn" onclick="document.querySelector('.skipped-modal').style.display='block'">
-            Show Skipped Files
-        </button>
-        <div class="skipped-modal">
-            <button class="close" onclick="this.parentElement.style.display='none'">&times;</button>
-            <h4>Skipped Files (Unsupported):</h4>
-            <ul>
-                <?php foreach($skipped as $file): ?>
-                    <li><?= htmlspecialchars($file['name']) ?> <span style="color:#888;">(<?= htmlspecialchars($file['ext']) ?>)</span></li>
-                <?php endforeach; ?>
-            </ul>
-        </div>
-    <?php endif; ?>
 
     <script>
         function showLightbox(imageSrc) {
