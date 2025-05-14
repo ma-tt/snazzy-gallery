@@ -25,19 +25,35 @@ foreach (new DirectoryIterator('.') as $file) {
             font-family: system-ui, -apple-system, sans-serif;
         }
         .gallery {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 20px;
+            columns: 1 250px;
+            column-gap: 20px;
             padding: 20px;
         }
+        @media (min-width: 600px) {
+            .gallery {
+                columns: 2 250px;
+            }
+        }
+        @media (min-width: 900px) {
+            .gallery {
+                columns: 3 250px;
+            }
+        }
+        @media (min-width: 1200px) {
+            .gallery {
+                columns: 4 250px;
+            }
+        }
         .gallery-item {
-            position: relative;
+            display: block;
             background: #fff;
             border-radius: 8px;
             overflow: hidden;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             transition: transform 0.3s ease;
             cursor: pointer;
+            margin-bottom: 20px;
+            break-inside: avoid;
         }
         .gallery-item:hover {
             transform: scale(1.02);
@@ -47,6 +63,7 @@ foreach (new DirectoryIterator('.') as $file) {
             height: auto;
             display: block;
             object-fit: contain;
+            background: #eee;
         }
         .lightbox {
             display: none;
