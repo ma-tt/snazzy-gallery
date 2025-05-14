@@ -41,7 +41,7 @@ foreach (new DirectoryIterator('.') as $file) {
     <style>
         body {
             margin: 0;
-            padding: 20px;
+            padding: 12px;
             background: #f5f5f5;
             font-family: system-ui, -apple-system, sans-serif;
         }
