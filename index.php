@@ -119,22 +119,25 @@ foreach (new DirectoryIterator('.') as $file) {
         .skipped-btn {
             display: inline-block;
             margin: 32px auto 0 auto;
-            background: #222;
-            color: #fff;
+            background: none;
+            color: #888;
             border: none;
             border-radius: 20px;
-            padding: 10px 18px;
-            font-size: 14px;
-            opacity: 0.7;
+            padding: 6px 12px;
+            font-size: 13px;
+            opacity: 0.5;
             cursor: pointer;
-            transition: opacity 0.2s;
+            transition: opacity 0.2s, color 0.2s;
             z-index: 1;
+            box-shadow: none;
         }
         .skipped-btn:hover {
-            opacity: 1;
+            opacity: 0.9;
+            color: #222;
+            background: #f0f0f0;
         }
         .skipped-btn:active {
-            opacity: 0.9;
+            opacity: 1;
         }
         .skipped-btn-container {
             width: 100%;
