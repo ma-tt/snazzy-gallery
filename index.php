@@ -146,7 +146,7 @@ foreach (new DirectoryIterator('.') as $file) {
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: #fff;
+            background: #888888;
             color: #222;
             border-radius: 8px;
             box-shadow: 0 2px 16px rgba(0,0,0,0.18);
