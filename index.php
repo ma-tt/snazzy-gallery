@@ -103,7 +103,7 @@ foreach (new DirectoryIterator('.') as $file) {
             cursor: pointer;
         }
         .lightbox img {
-            max-width: 90%;
+            max-width: 95%;
             max-height: 90vh;
             margin: auto;
             position: absolute;
