@@ -117,9 +117,8 @@ foreach (new DirectoryIterator('.') as $file) {
             object-fit: contain;
         }
         .skipped-btn {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
+            display: inline-block;
+            margin: 32px auto 0 auto;
             background: #222;
             color: #fff;
             border: none;
@@ -128,17 +127,25 @@ foreach (new DirectoryIterator('.') as $file) {
             font-size: 14px;
             opacity: 0.7;
             cursor: pointer;
-            z-index: 1100;
             transition: opacity 0.2s;
+            z-index: 1;
         }
         .skipped-btn:hover {
             opacity: 1;
         }
+        .skipped-btn:active {
+            opacity: 0.9;
+        }
+        .skipped-btn-container {
+            width: 100%;
+            text-align: center;
+        }
         .skipped-modal {
             display: none;
             position: fixed;
-            bottom: 70px;
-            right: 24px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             background: #fff;
             color: #222;
             border-radius: 8px;
@@ -186,14 +193,12 @@ foreach (new DirectoryIterator('.') as $file) {
         </div>
         <?php endforeach; ?>
     </div>
-    <div class="lightbox" onclick="this.style.display='none'">
-        <img src="" alt="">
-    </div>
-
     <?php if (count($skipped) > 0): ?>
-        <button class="skipped-btn" onclick="document.querySelector('.skipped-modal').style.display='block'">
-            Show Skipped Files
-        </button>
+        <div class="skipped-btn-container">
+            <button class="skipped-btn" onclick="document.querySelector('.skipped-modal').style.display='block'">
+                Show Skipped Files
+            </button>
+        </div>
         <div class="skipped-modal">
             <button class="close" onclick="this.parentElement.style.display='none'">&times;</button>
             <h4>Skipped Files (Unsupported):</h4>
@@ -204,6 +209,9 @@ foreach (new DirectoryIterator('.') as $file) {
             </ul>
         </div>
     <?php endif; ?>
+    <div class="lightbox" onclick="this.style.display='none'">
+        <img src="" alt="">
+    </div>
 
     <script>
         // Collect image sources for navigation
