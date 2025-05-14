@@ -1,12 +1,23 @@
 <?php
-$allowed_types = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-$images = [];
+$allowed_types = [
+    'image' => ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+    'video' => ['mp4', 'webm', 'ogg']
+];
+$media = [];
 
 foreach (new DirectoryIterator('.') as $file) {
     if ($file->isFile()) {
         $extension = strtolower($file->getExtension());
-        if (in_array($extension, $allowed_types)) {
-            $images[] = $file->getFilename();
+        if (in_array($extension, $allowed_types['image'])) {
+            $media[] = [
+                'type' => 'image',
+                'src' => $file->getFilename()
+            ];
+        } elseif (in_array($extension, $allowed_types['video'])) {
+            $media[] = [
+                'type' => 'video',
+                'src' => $file->getFilename()
+            ];
         }
     }
 }
@@ -65,6 +76,15 @@ foreach (new DirectoryIterator('.') as $file) {
             object-fit: contain;
             background: #eee;
         }
+        .gallery-item video {
+            width: 100%;
+            height: auto;
+            display: block;
+            background: #222;
+            border: none;
+            outline: none;
+            border-radius: 0;
+        }
         .lightbox {
             display: none;
             position: fixed;
@@ -90,9 +110,16 @@ foreach (new DirectoryIterator('.') as $file) {
 </head>
 <body>
     <div class="gallery">
-        <?php foreach($images as $image): ?>
-        <div class="gallery-item" onclick="showLightbox('<?= htmlspecialchars($image) ?>')">
-            <img loading="lazy" src="<?= htmlspecialchars($image) ?>" alt="">
+        <?php foreach($media as $item): ?>
+        <div class="gallery-item" onclick="<?php if($item['type']==='image'): ?>showLightbox('<?= htmlspecialchars($item['src']) ?>')<?php else: ?>null<?php endif; ?>">
+            <?php if ($item['type'] === 'image'): ?>
+                <img loading="lazy" src="<?= htmlspecialchars($item['src']) ?>" alt="">
+            <?php else: ?>
+                <video controls preload="metadata" poster="" tabindex="0">
+                    <source src="<?= htmlspecialchars($item['src']) ?>">
+                    Your browser does not support the video tag.
+                </video>
+            <?php endif; ?>
         </div>
         <?php endforeach; ?>
     </div>
