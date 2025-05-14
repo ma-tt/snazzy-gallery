@@ -46,23 +46,23 @@ foreach (new DirectoryIterator('.') as $file) {
             font-family: system-ui, -apple-system, sans-serif;
         }
         .gallery {
-            columns: 1 250px;
+            columns: 2 150px;
             column-gap: 20px;
             padding: 20px;
         }
         @media (min-width: 600px) {
             .gallery {
-                columns: 2 250px;
+                columns: 3 150px;
             }
         }
         @media (min-width: 900px) {
             .gallery {
-                columns: 3 250px;
+                columns: 4 150px;
             }
         }
         @media (min-width: 1200px) {
             .gallery {
-                columns: 4 250px;
+                columns: 6 150px;
             }
         }
         .gallery-item {
