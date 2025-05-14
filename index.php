@@ -48,7 +48,7 @@ foreach (new DirectoryIterator('.') as $file) {
         .gallery {
             columns: 2 140px;
             column-gap: 12px;
-            padding: 14px;
+            padding: 12px;
         }
         @media (min-width: 600px) {
             .gallery {
