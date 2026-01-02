@@ -8,6 +8,11 @@ $skipped = [];
 
 foreach (new DirectoryIterator('.') as $file) {
     if ($file->isFile()) {
+        $basename = strtolower($file->getFilename());
+        // skip favicons (favicon.png, favicon.ico, favicon-32.png, favicon.svg, etc.)
+        if (strpos($basename, 'favicon') === 0) {
+            continue;
+        }
         $extension = strtolower($file->getExtension());
         if (in_array($extension, $allowed_types['image'])) {
             $media[] = [
