@@ -1,10 +1,10 @@
 <?php
 $allowed_types = [
-    'image' => ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'],
-    'video' => ['mp4', 'webm', 'ogg', 'mov']
+    'image' => ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif', 'svg'],
+    'video' => ['mp4', 'webm', 'mov']
 ];
-$ignore = ['thumbs.db', '.ds_store', 'desktop.ini'];
-$media = [];
+$ignore  = ['thumbs.db', '.ds_store', 'desktop.ini'];
+$media   = [];
 $skipped = [];
 
 foreach (new DirectoryIterator('.') as $file) {
@@ -21,8 +21,9 @@ foreach (new DirectoryIterator('.') as $file) {
     }
 }
 
-usort($media, fn($a, $b) => strnatcasecmp($a['src'], $b['src']));
-usort($skipped, fn($a, $b) => strnatcasecmp($a['name'], $b['name']));
+// Regular closures — compatible with PHP 5.4+ (no short arrow fn syntax)
+usort($media,   function($a, $b) { return strnatcasecmp($a['src'],  $b['src']);  });
+usort($skipped, function($a, $b) { return strnatcasecmp($a['name'], $b['name']); });
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -30,7 +31,7 @@ usort($skipped, fn($a, $b) => strnatcasecmp($a['name'], $b['name']));
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars(basename(getcwd())) ?></title>
-    <link rel="icon" href="favicon.png">
+    <link rel="icon" href="data:,">
     <style>
         *, *::before, *::after { box-sizing: border-box; }
         body {
@@ -45,8 +46,8 @@ usort($skipped, fn($a, $b) => strnatcasecmp($a['name'], $b['name']));
             column-gap: 12px;
             padding: 12px;
         }
-        @media (min-width: 600px) { .gallery { columns: 3 150px; } }
-        @media (min-width: 900px) { .gallery { columns: 4 160px; } }
+        @media (min-width: 600px)  { .gallery { columns: 3 150px; } }
+        @media (min-width: 900px)  { .gallery { columns: 4 160px; } }
         @media (min-width: 1200px) { .gallery { columns: 6 180px; } }
         .gallery-item {
             position: relative;
@@ -64,7 +65,8 @@ usort($skipped, fn($a, $b) => strnatcasecmp($a['name'], $b['name']));
             transform: scale(1.02);
             box-shadow: 0 6px 24px rgba(0,0,0,0.7);
         }
-        .gallery-item img, .gallery-item video {
+        .gallery-item img,
+        .gallery-item video {
             width: 100%;
             height: auto;
             display: block;
@@ -72,6 +74,8 @@ usort($skipped, fn($a, $b) => strnatcasecmp($a['name'], $b['name']));
             background: #111;
             pointer-events: none;
         }
+        /* Fallback height so video cards aren't zero-height on iOS before metadata loads */
+        .gallery-item video { min-height: 120px; }
         .play-overlay {
             position: absolute;
             inset: 0;
@@ -81,9 +85,10 @@ usort($skipped, fn($a, $b) => strnatcasecmp($a['name'], $b['name']));
             pointer-events: none;
         }
         .play-icon {
-            width: 48px;
-            height: 48px;
+            width: 52px;
+            height: 52px;
             background: rgba(0,0,0,0.55);
+            border: 2px solid rgba(255,255,255,0.55);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -92,10 +97,11 @@ usort($skipped, fn($a, $b) => strnatcasecmp($a['name'], $b['name']));
             font-size: 18px;
             padding-left: 3px;
             backdrop-filter: blur(4px);
-            transition: transform 0.2s, background 0.2s;
+            transition: transform 0.2s, background 0.2s, border-color 0.2s;
         }
         .gallery-item:hover .play-icon {
-            background: rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.15);
+            border-color: rgba(255,255,255,0.9);
             transform: scale(1.1);
         }
         .empty {
@@ -117,16 +123,19 @@ usort($skipped, fn($a, $b) => strnatcasecmp($a['name'], $b['name']));
             justify-content: center;
         }
         .lightbox.open { display: flex; }
-        .lb-img, .lb-vid {
-            max-width: 90vw;
+        .lb-img,
+        .lb-vid {
+            /* Subtract nav button footprint so media never slides under arrows */
+            max-width: calc(100vw - 120px);
             max-height: 88vh;
             object-fit: contain;
             display: none;
             border-radius: 3px;
             user-select: none;
         }
-        .lb-vid { max-width: min(90vw, 960px); background: #000; }
-        .lb-img.show, .lb-vid.show { display: block; }
+        .lb-vid { background: #000; }
+        .lb-img.show,
+        .lb-vid.show { display: block; }
         .lb-btn {
             position: fixed;
             background: rgba(255,255,255,0.1);
@@ -145,8 +154,8 @@ usort($skipped, fn($a, $b) => strnatcasecmp($a['name'], $b['name']));
         }
         .lb-btn:hover { background: rgba(255,255,255,0.22); }
         .lb-close { top: 14px; right: 14px; font-size: 20px; }
-        .lb-prev { left: 14px; top: 50%; transform: translateY(-50%); font-size: 30px; padding-right: 2px; }
-        .lb-next { right: 14px; top: 50%; transform: translateY(-50%); font-size: 30px; padding-left: 2px; }
+        .lb-prev  { left: 14px;  top: 50%; transform: translateY(-50%); font-size: 30px; padding-right: 2px; }
+        .lb-next  { right: 14px; top: 50%; transform: translateY(-50%); font-size: 30px; padding-left:  2px; }
         .lb-prev.hide, .lb-next.hide { display: none; }
         .lb-counter {
             position: fixed;
@@ -157,6 +166,15 @@ usort($skipped, fn($a, $b) => strnatcasecmp($a['name'], $b['name']));
             font-size: 13px;
             pointer-events: none;
             letter-spacing: 0.5px;
+        }
+        .lb-hint {
+            position: fixed;
+            bottom: 14px;
+            right: 16px;
+            color: rgba(255,255,255,0.2);
+            font-size: 11px;
+            pointer-events: none;
+            letter-spacing: 0.2px;
         }
 
         /* Skipped */
@@ -196,7 +214,13 @@ usort($skipped, fn($a, $b) => strnatcasecmp($a['name'], $b['name']));
             box-shadow: 0 8px 40px rgba(0,0,0,0.6);
         }
         .skipped-modal h4 { margin: 0 0 12px; font-size: 14px; color: #eee; font-weight: 500; }
-        .skipped-modal ul { margin: 0; padding-left: 16px; font-size: 12px; line-height: 2; }
+        .skipped-modal ul {
+            margin: 0;
+            padding-left: 16px;
+            font-size: 12px;
+            line-height: 2;
+            word-break: break-all;
+        }
         .skipped-modal .x {
             position: absolute;
             top: 10px; right: 12px;
@@ -210,7 +234,7 @@ usort($skipped, fn($a, $b) => strnatcasecmp($a['name'], $b['name']));
 <?php if (empty($media)): ?>
     <div class="empty">
         <p>No media found in this directory.</p>
-        <p class="hint">Supported: jpg &middot; png &middot; gif &middot; webp &middot; avif &middot; mp4 &middot; webm &middot; mov</p>
+        <p class="hint">Supported: jpg &middot; png &middot; gif &middot; webp &middot; avif &middot; svg &middot; mp4 &middot; webm &middot; mov</p>
     </div>
 <?php else: ?>
     <div class="gallery">
@@ -251,64 +275,91 @@ usort($skipped, fn($a, $b) => strnatcasecmp($a['name'], $b['name']));
 <div class="lightbox" id="lb">
     <button class="lb-btn lb-close" onclick="closeLb()">&times;</button>
     <button class="lb-btn lb-prev" onclick="nav(-1)">&#8249;</button>
-    <img class="lb-img" src="" alt="">
+    <img class="lb-img" alt="">
     <video class="lb-vid" controls preload="none"></video>
     <button class="lb-btn lb-next" onclick="nav(1)">&#8250;</button>
     <span class="lb-counter"></span>
+    <span class="lb-hint">&#8592; &#8594; &nbsp;&nbsp; esc</span>
 </div>
 
 <script>
-    const media = <?= json_encode(array_map(fn($m) => ['type' => $m['type'], 'src' => $m['src']], $media)) ?>;
-    let cur = -1;
+    var media  = <?= json_encode($media) ?>;
+    var cur    = -1;
+    var lb     = document.getElementById('lb');
+    var swiped = false;
 
-    function openLb(i) { cur = i; render(); document.getElementById('lb').classList.add('open'); }
-
-    function closeLb() {
-        const lb = document.getElementById('lb');
-        lb.classList.remove('open');
-        const v = lb.querySelector('.lb-vid');
-        v.pause(); v.removeAttribute('src'); v.load();
+    function openLb(i) {
+        cur = i;
+        render();
+        lb.classList.add('open');
     }
 
-    function nav(d) { cur = (cur + d + media.length) % media.length; render(); }
+    function closeLb() {
+        lb.classList.remove('open');
+        var v = lb.querySelector('.lb-vid');
+        v.pause();
+        v.removeAttribute('src');
+        v.load();
+    }
+
+    function nav(d) {
+        cur = (cur + d + media.length) % media.length;
+        render();
+    }
 
     function render() {
-        const lb = document.getElementById('lb');
-        const img = lb.querySelector('.lb-img');
-        const vid = lb.querySelector('.lb-vid');
-        const item = media[cur];
+        var img     = lb.querySelector('.lb-img');
+        var vid     = lb.querySelector('.lb-vid');
+        var counter = lb.querySelector('.lb-counter');
+        var item    = media[cur];
+        var n       = media.length;
         vid.pause();
         if (item.type === 'image') {
             img.src = item.src;
-            img.classList.add('show'); vid.classList.remove('show');
-            vid.removeAttribute('src'); vid.load();
+            img.classList.add('show');
+            vid.classList.remove('show');
+            vid.removeAttribute('src');
+            vid.load();
         } else {
-            vid.src = item.src; vid.load();
-            vid.classList.add('show'); img.classList.remove('show');
-            img.src = '';
+            vid.src = item.src;
+            vid.load();
+            vid.classList.add('show');
+            img.classList.remove('show');
+            img.removeAttribute('src');
         }
-        const n = media.length;
-        lb.querySelector('.lb-counter').textContent = n > 1 ? `${cur + 1} / ${n}` : '';
+        counter.textContent = n > 1 ? (cur + 1) + ' / ' + n : '';
         lb.querySelector('.lb-prev').classList.toggle('hide', n <= 1);
         lb.querySelector('.lb-next').classList.toggle('hide', n <= 1);
     }
 
-    document.getElementById('lb').addEventListener('click', e => { if (e.target.id === 'lb') closeLb(); });
-
-    document.addEventListener('keydown', e => {
-        if (!document.getElementById('lb').classList.contains('open')) return;
-        if (e.key === 'ArrowRight') nav(1);
-        else if (e.key === 'ArrowLeft') nav(-1);
-        else if (e.key === 'Escape') closeLb();
+    // Swipe fires a synthetic click after touchend — ignore it so the
+    // lightbox doesn't close immediately after navigating.
+    lb.addEventListener('click', function(e) {
+        if (swiped) { swiped = false; return; }
+        if (e.target === lb) closeLb();
     });
 
-    let tx = null;
-    const lb = document.getElementById('lb');
-    lb.addEventListener('touchstart', e => { if (e.touches.length === 1) tx = e.touches[0].clientX; }, {passive: true});
-    lb.addEventListener('touchend', e => {
+    // Skip gallery navigation when the video element has keyboard focus
+    // so the browser's native seek behaviour (← →) still works.
+    document.addEventListener('keydown', function(e) {
+        if (!lb.classList.contains('open')) return;
+        if (e.target && e.target.tagName === 'VIDEO') return;
+        if (e.key === 'ArrowRight')      nav(1);
+        else if (e.key === 'ArrowLeft')  nav(-1);
+        else if (e.key === 'Escape')     closeLb();
+    });
+
+    var tx = null;
+    lb.addEventListener('touchstart', function(e) {
+        if (e.touches.length === 1) tx = e.touches[0].clientX;
+    }, {passive: true});
+    lb.addEventListener('touchend', function(e) {
         if (tx !== null && e.changedTouches.length === 1) {
-            const dx = e.changedTouches[0].clientX - tx;
-            if (Math.abs(dx) > 50 && media.length > 1) nav(dx < 0 ? 1 : -1);
+            var dx = e.changedTouches[0].clientX - tx;
+            if (Math.abs(dx) > 50 && media.length > 1) {
+                nav(dx < 0 ? 1 : -1);
+                swiped = true;
+            }
             tx = null;
         }
     });
