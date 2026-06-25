@@ -16,10 +16,10 @@ Just drop `index.php` into any web directory containing images and/or videos, an
   Uses CSS columns for a Pinterest-like, gapless grid that preserves each media's original aspect ratio.
 
 - **Image & Video Support:**  
-  Supports popular image formats (`jpg`, `jpeg`, `png`, `gif`, `webp`) and video formats (`mp4`, `webm`, `ogg`).
+  Supports `jpg`, `jpeg`, `png`, `gif`, `webp`, `avif`, `svg` and video formats `mp4`, `webm`, `mov`.
 
-- **Lightbox for Images:**  
-  Click any image to view it in a fullscreen overlay.
+- **Lightbox for Images & Videos:**  
+  Click any image or video to view it fullscreen. Navigate with ← → arrow keys, swipe left/right on mobile, or press Esc to close.
 
 - **Bandwidth-Friendly Video Loading:**  
   Videos load only metadata by default; full video data is loaded only when played.
@@ -44,8 +44,8 @@ That's it! The gallery will automatically display all supported media.
 
 ## Supported Formats
 
-- **Images:** `jpg`, `jpeg`, `png`, `gif`, `webp`
-- **Videos:** `mp4`, `webm`, `ogg`
+- **Images:** `jpg`, `jpeg`, `png`, `gif`, `webp`, `avif`, `svg`
+- **Videos:** `mp4`, `webm`, `mov`
 
 > Unsupported files (including PHP files) are ignored.  
 > A "Show Skipped Files" button appears if any unsupported files are found.
