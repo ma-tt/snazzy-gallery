@@ -241,10 +241,12 @@ usort($skipped, function($a, $b) { return strnatcasecmp($a['name'], $b['name']);
         <?php foreach ($media as $idx => $item): ?>
         <div class="gallery-item" onclick="openLb(<?= $idx ?>)">
             <?php if ($item['type'] === 'image'): ?>
-                <img loading="lazy" src="<?= htmlspecialchars($item['src']) ?>" alt="">
+                <img loading="lazy"
+                     src="<?= rawurlencode($item['src']) ?>"
+                     alt="<?= htmlspecialchars(pathinfo($item['src'], PATHINFO_FILENAME)) ?>">
             <?php else: ?>
                 <video preload="metadata">
-                    <source src="<?= htmlspecialchars($item['src']) ?>">
+                    <source src="<?= rawurlencode($item['src']) ?>">
                 </video>
                 <div class="play-overlay"><div class="play-icon">&#9654;</div></div>
             <?php endif; ?>
@@ -292,10 +294,12 @@ usort($skipped, function($a, $b) { return strnatcasecmp($a['name'], $b['name']);
         cur = i;
         render();
         lb.classList.add('open');
+        document.body.style.overflow = 'hidden';
     }
 
     function closeLb() {
         lb.classList.remove('open');
+        document.body.style.overflow = '';
         var v = lb.querySelector('.lb-vid');
         v.pause();
         v.removeAttribute('src');
@@ -315,13 +319,13 @@ usort($skipped, function($a, $b) { return strnatcasecmp($a['name'], $b['name']);
         var n       = media.length;
         vid.pause();
         if (item.type === 'image') {
-            img.src = item.src;
+            img.src = encodeURIComponent(item.src);
             img.classList.add('show');
             vid.classList.remove('show');
             vid.removeAttribute('src');
             vid.load();
         } else {
-            vid.src = item.src;
+            vid.src = encodeURIComponent(item.src);
             vid.load();
             vid.classList.add('show');
             img.classList.remove('show');
@@ -344,13 +348,15 @@ usort($skipped, function($a, $b) { return strnatcasecmp($a['name'], $b['name']);
     document.addEventListener('keydown', function(e) {
         if (!lb.classList.contains('open')) return;
         if (e.target && e.target.tagName === 'VIDEO') return;
-        if (e.key === 'ArrowRight')      nav(1);
-        else if (e.key === 'ArrowLeft')  nav(-1);
-        else if (e.key === 'Escape')     closeLb();
+        if (e.key === 'ArrowRight')     nav(1);
+        else if (e.key === 'ArrowLeft') nav(-1);
+        else if (e.key === 'Escape')    closeLb();
     });
 
     var tx = null;
     lb.addEventListener('touchstart', function(e) {
+        // Don't intercept touches on the video element — let its controls work.
+        if (e.target && e.target.tagName === 'VIDEO') { tx = null; return; }
         if (e.touches.length === 1) tx = e.touches[0].clientX;
     }, {passive: true});
     lb.addEventListener('touchend', function(e) {
