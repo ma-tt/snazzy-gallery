@@ -1,6 +1,7 @@
 # Snazzy Gallery
 
 A beautiful, modern, and fully responsive single-file PHP gallery script.  
+
 Just drop `index.php` into any web directory containing images and/or videos, and Snazzy Gallery will automatically display them in a stunning, masonry-style grid—no setup required!
 
 ![Snazzy Gallery Screenshot](screenshot.jpg)
