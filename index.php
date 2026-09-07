@@ -290,7 +290,7 @@ header(
             overflow-y: auto;
             box-shadow: 0 8px 40px rgba(0,0,0,0.6);
         }
-        .skipped-modal h4 { margin: 0 0 12px; font-size: 14px; color: #eee; font-weight: 500; }
+        .skipped-modal h4 { margin: 0 0 12px; padding-right: 18px; font-size: 14px; color: #eee; font-weight: 500; }
         .skipped-modal ul {
             margin: 0;
             padding-left: 16px;
