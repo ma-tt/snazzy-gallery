@@ -314,6 +314,7 @@ header(
     </style>
 </head>
 <body>
+<main>
 <?php if (empty($media)): ?>
     <div class="empty">
         <p>No media found in this directory.</p>
@@ -338,6 +339,7 @@ header(
         <?php endforeach; ?>
     </div>
 <?php endif; ?>
+</main>
 
 <?php if ($skipped_total > 0): ?>
     <div class="skipped-wrap">
