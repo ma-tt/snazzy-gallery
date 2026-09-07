@@ -63,6 +63,14 @@ function h($s) { return htmlspecialchars((string) $s, ENT_QUOTES | ENT_SUBSTITUT
 
 $nonce = base64_encode(random_bytes(16));
 
+// Serialise the media list for the client. JSON_INVALID_UTF8_SUBSTITUTE (PHP 7.2+)
+// keeps a single non-UTF-8 filename from collapsing the whole array to false; on
+// older PHP we fall back to an empty list so the page's scripts still run.
+$json_flags = JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES;
+if (defined('JSON_INVALID_UTF8_SUBSTITUTE')) $json_flags |= JSON_INVALID_UTF8_SUBSTITUTE;
+$media_json = json_encode($media, $json_flags);
+if ($media_json === false) $media_json = '[]';
+
 // Inline favicon so the gallery stays a single file: a small tiled-grid mark.
 $favicon = 'data:image/svg+xml,' . rawurlencode(
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">'
@@ -373,7 +381,7 @@ header(
 <script nonce="<?= $nonce ?>">
 (function () {
     "use strict";
-    var media  = <?= json_encode($media, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE) ?>;
+    var media  = <?= $media_json ?>;
     if (!Array.isArray(media)) media = [];
     var cur      = -1;
     var lb       = document.getElementById('lb');

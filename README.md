@@ -39,7 +39,8 @@ no dependencies.
 ## Requirements
 
 PHP 7.0 or newer. Works under Apache (`mod_php`), PHP-FPM (nginx, Caddy, …), or the built-in
-server (`php -S localhost:8000`).
+server (`php -S localhost:8000`). The built-in server does not honour HTTP range requests, so
+scrubbing within a long video needs a real web server; images are unaffected.
 
 ---
 
