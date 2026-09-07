@@ -1,38 +1,97 @@
 <?php
+// Snazzy Gallery — a single-file, zero-dependency media gallery.
+// Drop this file into any web directory of images/videos and open it in a browser.
+// Requires PHP 7.0+.
+
 $allowed_types = [
     'image' => ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif', 'svg'],
     'video' => ['mp4', 'webm', 'mov']
 ];
+$mime = [
+    'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png',
+    'gif' => 'image/gif',  'webp' => 'image/webp', 'avif' => 'image/avif',
+    'svg' => 'image/svg+xml',
+    'mp4' => 'video/mp4',  'webm' => 'video/webm', 'mov'  => 'video/quicktime',
+];
 $ignore  = ['thumbs.db', '.ds_store', 'desktop.ini'];
+$self    = basename(__FILE__);
 $media   = [];
-$skipped = [];
+$skipped = [];   // extension => count
 
-foreach (new DirectoryIterator('.') as $file) {
+// getimagesize() only reads the file header, but skip it for very large
+// directories so the page still renders quickly.
+$scan_dimensions = true;
+
+$entries = [];
+foreach (new DirectoryIterator(__DIR__) as $file) {
     if (!$file->isFile()) continue;
-    $basename = strtolower($file->getFilename());
-    if ($basename[0] === '.' || strpos($basename, 'favicon') === 0 || in_array($basename, $ignore)) continue;
-    $ext = strtolower($file->getExtension());
-    if (in_array($ext, $allowed_types['image'])) {
-        $media[] = ['type' => 'image', 'src' => $file->getFilename()];
-    } elseif (in_array($ext, $allowed_types['video'])) {
-        $media[] = ['type' => 'video', 'src' => $file->getFilename()];
+    $name     = $file->getFilename();
+    $basename = strtolower($name);
+    if ($name === $self) continue;
+    if ($basename === '' || $basename[0] === '.' || strpos($basename, 'favicon.') === 0 || in_array($basename, $ignore, true)) continue;
+    $entries[$name] = $file->getPathname();
+}
+if (count($entries) > 400) $scan_dimensions = false;
+
+foreach ($entries as $name => $path) {
+    $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+    if (in_array($ext, $allowed_types['image'], true)) {
+        $item = ['type' => 'image', 'src' => $name, 'url' => rawurlencode($name), 'mime' => $mime[$ext]];
+        if ($scan_dimensions && $ext !== 'svg') {
+            $size = @getimagesize($path);
+            if ($size && $size[0] > 0 && $size[1] > 0) {
+                $item['w'] = $size[0];
+                $item['h'] = $size[1];
+            }
+        }
+        $media[] = $item;
+    } elseif (in_array($ext, $allowed_types['video'], true)) {
+        $media[] = ['type' => 'video', 'src' => $name, 'url' => rawurlencode($name), 'mime' => $mime[$ext]];
     } elseif ($ext !== 'php' && $ext !== 'md' && $ext !== '') {
-        $skipped[] = ['name' => $file->getFilename(), 'ext' => $ext];
+        // Record the format only, never the filename — the gallery is often
+        // served from a directory that also holds files the visitor shouldn't enumerate.
+        $skipped[$ext] = (isset($skipped[$ext]) ? $skipped[$ext] : 0) + 1;
     }
 }
 
-// Regular closures — compatible with PHP 5.4+ (no short arrow fn syntax)
-usort($media,   function($a, $b) { return strnatcasecmp($a['src'],  $b['src']);  });
-usort($skipped, function($a, $b) { return strnatcasecmp($a['name'], $b['name']); });
+// Regular closures — compatible with PHP 7.0+ (no short arrow fn syntax).
+usort($media, function ($a, $b) { return strnatcasecmp($a['src'], $b['src']); });
+ksort($skipped, SORT_NATURAL | SORT_FLAG_CASE);
+$skipped_total = array_sum($skipped);
+
+function h($s) { return htmlspecialchars((string) $s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
+
+$nonce = base64_encode(random_bytes(16));
+
+// Inline favicon so the gallery stays a single file: a small tiled-grid mark.
+$favicon = 'data:image/svg+xml,' . rawurlencode(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">'
+    . '<rect width="32" height="32" rx="6" fill="#0f0f0f"/>'
+    . '<rect x="6" y="6" width="9" height="9" rx="2" fill="#ededed"/>'
+    . '<rect x="17" y="6" width="9" height="9" rx="2" fill="#8a8a8a"/>'
+    . '<rect x="6" y="17" width="9" height="9" rx="2" fill="#8a8a8a"/>'
+    . '<rect x="17" y="17" width="9" height="9" rx="2" fill="#ededed"/>'
+    . '</svg>'
+);
+
+header('Content-Type: text/html; charset=UTF-8');
+header('X-Content-Type-Options: nosniff');
+header('Referrer-Policy: no-referrer');
+header(
+    "Content-Security-Policy: default-src 'none'; img-src 'self' data:; media-src 'self'; "
+    . "style-src 'nonce-$nonce'; script-src 'nonce-$nonce'; "
+    . "base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+);
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars(basename(getcwd())) ?></title>
-    <link rel="icon" href="data:,">
-    <style>
+    <meta name="robots" content="noindex, nofollow">
+    <title><?= h(basename(__DIR__)) ?></title>
+    <link rel="icon" href="<?= h($favicon) ?>">
+    <style nonce="<?= $nonce ?>">
         *, *::before, *::after { box-sizing: border-box; }
         body {
             margin: 0;
@@ -52,6 +111,13 @@ usort($skipped, function($a, $b) { return strnatcasecmp($a['name'], $b['name']);
         .gallery-item {
             position: relative;
             display: block;
+            width: 100%;
+            padding: 0;
+            border: none;
+            font: inherit;
+            color: inherit;
+            -webkit-appearance: none;
+            appearance: none;
             background: #1a1a1a;
             border-radius: 8px;
             overflow: hidden;
@@ -64,6 +130,10 @@ usort($skipped, function($a, $b) { return strnatcasecmp($a['name'], $b['name']);
         .gallery-item:hover {
             transform: scale(1.02);
             box-shadow: 0 6px 24px rgba(0,0,0,0.7);
+        }
+        .gallery-item:focus-visible {
+            outline: 2px solid #6ab7ff;
+            outline-offset: 2px;
         }
         .gallery-item img,
         .gallery-item video {
@@ -153,6 +223,7 @@ usort($skipped, function($a, $b) { return strnatcasecmp($a['name'], $b['name']);
             line-height: 1;
         }
         .lb-btn:hover { background: rgba(255,255,255,0.22); }
+        .lb-btn:focus-visible { outline: 2px solid #6ab7ff; }
         .lb-close { top: 14px; right: 14px; font-size: 20px; }
         .lb-prev  { left: 14px;  top: 50%; transform: translateY(-50%); font-size: 30px; padding-right: 2px; }
         .lb-next  { right: 14px; top: 50%; transform: translateY(-50%); font-size: 30px; padding-left:  2px; }
@@ -190,6 +261,7 @@ usort($skipped, function($a, $b) { return strnatcasecmp($a['name'], $b['name']);
             transition: color 0.2s, background 0.2s;
         }
         .skipped-btn:hover { color: #888; background: rgba(255,255,255,0.06); }
+        .skipped-btn:focus-visible { outline: 2px solid #6ab7ff; }
         .skipped-backdrop {
             display: none;
             position: fixed;
@@ -228,6 +300,12 @@ usort($skipped, function($a, $b) { return strnatcasecmp($a['name'], $b['name']);
             font-size: 18px; color: #555; cursor: pointer;
         }
         .skipped-modal .x:hover { color: #ccc; }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { transition-duration: 0.01ms !important; }
+            .gallery-item:hover,
+            .gallery-item:hover .play-icon { transform: none; }
+        }
     </style>
 </head>
 <body>
@@ -239,93 +317,125 @@ usort($skipped, function($a, $b) { return strnatcasecmp($a['name'], $b['name']);
 <?php else: ?>
     <div class="gallery">
         <?php foreach ($media as $idx => $item): ?>
-        <div class="gallery-item" onclick="openLb(<?= $idx ?>)">
+        <button type="button" class="gallery-item" data-idx="<?= $idx ?>"
+                aria-label="Open <?= h(pathinfo($item['src'], PATHINFO_FILENAME)) ?>">
             <?php if ($item['type'] === 'image'): ?>
-                <img loading="lazy"
-                     src="<?= rawurlencode($item['src']) ?>"
-                     alt="<?= htmlspecialchars(pathinfo($item['src'], PATHINFO_FILENAME)) ?>">
+                <img loading="lazy" decoding="async" src="<?= $item['url'] ?>"<?php
+                    if (isset($item['w'])) echo ' width="' . $item['w'] . '" height="' . $item['h'] . '"';
+                ?> alt="<?= h(pathinfo($item['src'], PATHINFO_FILENAME)) ?>">
             <?php else: ?>
-                <video preload="metadata">
-                    <source src="<?= rawurlencode($item['src']) ?>">
+                <video preload="metadata" muted playsinline>
+                    <source src="<?= $item['url'] ?>#t=0.1" type="<?= h($item['mime']) ?>">
                 </video>
-                <div class="play-overlay"><div class="play-icon">&#9654;</div></div>
+                <span class="play-overlay"><span class="play-icon">&#9654;</span></span>
             <?php endif; ?>
-        </div>
+        </button>
         <?php endforeach; ?>
     </div>
 <?php endif; ?>
 
-<?php if (!empty($skipped)): ?>
+<?php if ($skipped_total > 0): ?>
     <div class="skipped-wrap">
-        <button class="skipped-btn" onclick="document.querySelector('.skipped-backdrop').classList.add('open')">
-            <?= count($skipped) ?> file<?= count($skipped) !== 1 ? 's' : '' ?> skipped
+        <button type="button" class="skipped-btn" id="skipped-open">
+            <?= $skipped_total ?> file<?= $skipped_total !== 1 ? 's' : '' ?> skipped
         </button>
     </div>
-    <div class="skipped-backdrop" onclick="if(event.target===this)this.classList.remove('open')">
-        <div class="skipped-modal">
-            <button class="x" onclick="this.closest('.skipped-backdrop').classList.remove('open')">&times;</button>
+    <div class="skipped-backdrop" id="skipped-backdrop">
+        <div class="skipped-modal" role="dialog" aria-modal="true" aria-label="Skipped files">
+            <button type="button" class="x" id="skipped-close" aria-label="Close">&times;</button>
             <h4>Skipped (unsupported format)</h4>
             <ul>
-                <?php foreach ($skipped as $f): ?>
-                    <li><?= htmlspecialchars($f['name']) ?></li>
+                <?php foreach ($skipped as $ext => $count): ?>
+                    <li><?= h($ext) ?><?= $count > 1 ? ' &times; ' . $count : '' ?></li>
                 <?php endforeach; ?>
             </ul>
         </div>
     </div>
 <?php endif; ?>
 
-<div class="lightbox" id="lb">
-    <button class="lb-btn lb-close" onclick="closeLb()">&times;</button>
-    <button class="lb-btn lb-prev" onclick="nav(-1)">&#8249;</button>
-    <img class="lb-img" alt="">
-    <video class="lb-vid" controls preload="none"></video>
-    <button class="lb-btn lb-next" onclick="nav(1)">&#8250;</button>
-    <span class="lb-counter"></span>
+<div class="lightbox" id="lb" role="dialog" aria-modal="true" aria-label="Media viewer">
+    <button type="button" class="lb-btn lb-close" data-act="close" aria-label="Close">&times;</button>
+    <button type="button" class="lb-btn lb-prev" data-act="prev" aria-label="Previous">&#8249;</button>
+    <img class="lb-img" src="data:," alt="">
+    <video class="lb-vid" controls playsinline preload="none"></video>
+    <button type="button" class="lb-btn lb-next" data-act="next" aria-label="Next">&#8250;</button>
+    <span class="lb-counter" aria-live="polite"></span>
     <span class="lb-hint">&#8592; &#8594; &nbsp;&nbsp; esc</span>
 </div>
 
-<script>
-    var media  = <?= json_encode($media) ?>;
-    var cur    = -1;
-    var lb     = document.getElementById('lb');
-    var swiped = false;
+<script nonce="<?= $nonce ?>">
+(function () {
+    "use strict";
+    var media  = <?= json_encode($media, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE) ?>;
+    if (!Array.isArray(media)) media = [];
+    var cur      = -1;
+    var lb       = document.getElementById('lb');
+    var img      = lb.querySelector('.lb-img');
+    var vid      = lb.querySelector('.lb-vid');
+    var counter  = lb.querySelector('.lb-counter');
+    var swiped   = false;
+    var lastFocused = null;
+
+    function preload(i) {
+        var m = media[i];
+        if (m && m.type === 'image') { var p = new Image(); p.src = m.url; }
+    }
+
+    // Reflect the open item in the URL fragment (#p3) so links are shareable and
+    // survive a refresh. replaceState never fires hashchange, so there is no loop.
+    function syncHash() {
+        var want = cur >= 0 ? '#p' + (cur + 1) : location.pathname + location.search;
+        try {
+            if (history.replaceState) history.replaceState(null, '', want);
+            else if (cur >= 0) location.hash = 'p' + (cur + 1);
+        } catch (e) { /* file:// or blocked — deep links just won't update */ }
+    }
 
     function openLb(i) {
+        if (i < 0 || i >= media.length) return;
+        if (!lb.classList.contains('open')) lastFocused = document.activeElement;
         cur = i;
         render();
         lb.classList.add('open');
         document.body.style.overflow = 'hidden';
+        lb.querySelector('.lb-close').focus();
     }
 
     function closeLb() {
         lb.classList.remove('open');
         document.body.style.overflow = '';
-        var v = lb.querySelector('.lb-vid');
-        v.pause();
-        v.removeAttribute('src');
-        v.load();
+        vid.pause();
+        vid.removeAttribute('src');
+        vid.load();
+        img.removeAttribute('src');
+        cur = -1;
+        syncHash();
+        if (lastFocused && lastFocused.focus) lastFocused.focus();
     }
 
-    function nav(d) {
-        cur = (cur + d + media.length) % media.length;
+    function go(i) {
+        cur = (i + media.length) % media.length;
         render();
     }
 
+    function nav(d) {
+        if (media.length < 2) return;
+        go(cur + d);
+    }
+
     function render() {
-        var img     = lb.querySelector('.lb-img');
-        var vid     = lb.querySelector('.lb-vid');
-        var counter = lb.querySelector('.lb-counter');
-        var item    = media[cur];
-        var n       = media.length;
+        var item = media[cur];
+        var n    = media.length;
         vid.pause();
         if (item.type === 'image') {
-            img.src = encodeURIComponent(item.src);
+            img.src = item.url;
+            img.alt = item.src.replace(/\.[^.]+$/, '');
             img.classList.add('show');
             vid.classList.remove('show');
             vid.removeAttribute('src');
             vid.load();
         } else {
-            vid.src = encodeURIComponent(item.src);
+            vid.src = item.url;
             vid.load();
             vid.classList.add('show');
             img.classList.remove('show');
@@ -334,32 +444,64 @@ usort($skipped, function($a, $b) { return strnatcasecmp($a['name'], $b['name']);
         counter.textContent = n > 1 ? (cur + 1) + ' / ' + n : '';
         lb.querySelector('.lb-prev').classList.toggle('hide', n <= 1);
         lb.querySelector('.lb-next').classList.toggle('hide', n <= 1);
+        preload((cur + 1) % n);
+        preload((cur - 1 + n) % n);
+        syncHash();
     }
 
-    // Swipe fires a synthetic click after touchend — ignore it so the
-    // lightbox doesn't close immediately after navigating.
-    lb.addEventListener('click', function(e) {
+    // --- Grid ---
+    var gallery = document.querySelector('.gallery');
+    if (gallery) {
+        gallery.addEventListener('click', function (e) {
+            var btn = e.target.closest('.gallery-item');
+            if (btn) openLb(+btn.getAttribute('data-idx'));
+        });
+    }
+
+    // --- Lightbox controls ---
+    lb.addEventListener('click', function (e) {
         if (swiped) { swiped = false; return; }
+        var act = e.target.closest('[data-act]');
+        if (act) {
+            if (act.dataset.act === 'close') closeLb();
+            else if (act.dataset.act === 'prev') nav(-1);
+            else if (act.dataset.act === 'next') nav(1);
+            return;
+        }
         if (e.target === lb) closeLb();
     });
 
-    // Skip gallery navigation when the video element has keyboard focus
-    // so the browser's native seek behaviour (← →) still works.
-    document.addEventListener('keydown', function(e) {
+    document.addEventListener('keydown', function (e) {
         if (!lb.classList.contains('open')) return;
-        if (e.target && e.target.tagName === 'VIDEO') return;
-        if (e.key === 'ArrowRight')     nav(1);
-        else if (e.key === 'ArrowLeft') nav(-1);
-        else if (e.key === 'Escape')    closeLb();
+        // Let the video element keep native ArrowLeft/Right seeking when focused.
+        var onVideo = e.target && e.target.tagName === 'VIDEO';
+        if (e.key === 'Escape')            { closeLb(); }
+        else if (e.key === 'Tab')          { trapFocus(e); }
+        else if (onVideo)                  { return; }
+        else if (e.key === 'ArrowRight')   { nav(1); }
+        else if (e.key === 'ArrowLeft')    { nav(-1); }
+        else if (e.key === 'Home')         { go(0); }
+        else if (e.key === 'End')          { go(media.length - 1); }
     });
 
+    function trapFocus(e) {
+        var f = Array.prototype.filter.call(
+            lb.querySelectorAll('button, video.show'),
+            function (el) { return el.offsetParent !== null; }
+        );
+        if (!f.length) return;
+        var first = f[0], last = f[f.length - 1];
+        if (e.shiftKey && document.activeElement === first) { last.focus(); e.preventDefault(); }
+        else if (!e.shiftKey && document.activeElement === last) { first.focus(); e.preventDefault(); }
+    }
+
+    // --- Touch / swipe ---
     var tx = null;
-    lb.addEventListener('touchstart', function(e) {
-        // Don't intercept touches on the video element — let its controls work.
+    lb.addEventListener('touchstart', function (e) {
         if (e.target && e.target.tagName === 'VIDEO') { tx = null; return; }
         if (e.touches.length === 1) tx = e.touches[0].clientX;
-    }, {passive: true});
-    lb.addEventListener('touchend', function(e) {
+    }, { passive: true });
+    lb.addEventListener('touchend', function (e) {
         if (tx !== null && e.changedTouches.length === 1) {
             var dx = e.changedTouches[0].clientX - tx;
             if (Math.abs(dx) > 50 && media.length > 1) {
@@ -369,6 +511,38 @@ usort($skipped, function($a, $b) { return strnatcasecmp($a['name'], $b['name']);
             tx = null;
         }
     });
+
+    // --- Deep links (#p3) ---
+    function hashIndex() {
+        var m = /^#p(\d+)$/.exec(location.hash);
+        if (!m) return -1;
+        var i = parseInt(m[1], 10) - 1;
+        return (i >= 0 && i < media.length) ? i : -1;
+    }
+    window.addEventListener('hashchange', function () {
+        var i = hashIndex();
+        if (i >= 0) {
+            if (!lb.classList.contains('open')) openLb(i);
+            else if (i !== cur) go(i);
+        } else if (lb.classList.contains('open')) {
+            closeLb();
+        }
+    });
+    (function () { var i = hashIndex(); if (i >= 0) openLb(i); })();
+
+    // --- Skipped-files panel ---
+    var sOpen = document.getElementById('skipped-open');
+    if (sOpen) {
+        var backdrop = document.getElementById('skipped-backdrop');
+        sOpen.addEventListener('click', function () { backdrop.classList.add('open'); });
+        backdrop.addEventListener('click', function (e) {
+            if (e.target === backdrop || e.target.id === 'skipped-close') backdrop.classList.remove('open');
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') backdrop.classList.remove('open');
+        });
+    }
+})();
 </script>
 </body>
 </html>
