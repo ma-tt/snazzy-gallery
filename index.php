@@ -77,6 +77,8 @@ $favicon = 'data:image/svg+xml,' . rawurlencode(
 header('Content-Type: text/html; charset=UTF-8');
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: no-referrer');
+// The listing changes whenever files are added or removed — always revalidate.
+header('Cache-Control: no-cache');
 header(
     "Content-Security-Policy: default-src 'none'; img-src 'self' data:; media-src 'self'; "
     . "style-src 'nonce-$nonce'; script-src 'nonce-$nonce'; "
@@ -99,6 +101,7 @@ header(
             background: #0f0f0f;
             font-family: system-ui, -apple-system, sans-serif;
             min-height: 100vh;
+            min-height: 100dvh;
         }
         .gallery {
             columns: 2 140px;
@@ -197,7 +200,9 @@ header(
         .lb-vid {
             /* Subtract nav button footprint so media never slides under arrows */
             max-width: calc(100vw - 120px);
+            max-width: calc(100dvw - 120px);
             max-height: 88vh;
+            max-height: 88dvh;
             object-fit: contain;
             display: none;
             border-radius: 3px;
@@ -485,9 +490,12 @@ header(
     });
 
     function trapFocus(e) {
+        // querySelectorAll is in DOM order (close, prev, video, next); the nav
+        // buttons carry .hide when there's only one item. offsetParent can't be
+        // used here — the buttons are position:fixed, so it is always null.
         var f = Array.prototype.filter.call(
-            lb.querySelectorAll('button, video.show'),
-            function (el) { return el.offsetParent !== null; }
+            lb.querySelectorAll('.lb-close, .lb-prev, .lb-vid.show, .lb-next'),
+            function (el) { return !el.classList.contains('hide'); }
         );
         if (!f.length) return;
         var first = f[0], last = f[f.length - 1];
